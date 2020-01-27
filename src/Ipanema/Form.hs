@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RankNTypes #-}
 
 module Ipanema.Form where
@@ -14,15 +15,15 @@ import qualified Data.Map.Strict as Map
 import           Reflex
 import           Reflex.Dom hiding (mainWidgetWithHead)
 
-formGroup :: (Show reason, MonadWidget t m, EventWriter t (Endo form) m) => 
-       Text
-    -> Lens' form (Maybe Text)
-    -> (form -> Maybe (Validation [reason] a))
-    -> Text
-    -> Dynamic t form 
-    -> Event t ()
-    -> m (Dynamic t (Maybe (Validation [reason] a)))
-formGroup label lens validator fieldType dynFormRaw resetEvt = do
+data FormGroupConfig form reason a = FormGroupConfig {
+    label :: Text
+  , lens :: Lens' form (Maybe Text)
+  , validator :: form -> Maybe (Validation [reason] a)
+  , fieldType :: Text
+  }
+
+formGroup :: (Show reason, MonadWidget t m, EventWriter t (Endo form) m) => Event t () -> Dynamic t form -> FormGroupConfig form reason a -> m (Dynamic t (Maybe (Validation [reason] a)))
+formGroup resetEvt dynFormRaw FormGroupConfig{..} = do
   let dynValidated = validator <$> dynFormRaw
   elDynAttr "div" (mergeWithClass "form-group has-feedback" . mkClass <$> dynValidated) $ do
     elAttr "label" ("class" =: "control-label") $ text label

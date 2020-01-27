@@ -1,3 +1,4 @@
+{-# LANGUAGE Arrows #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -40,16 +41,27 @@ changePasswordWidget = do
   rec dynFormRaw <- foldDyn appEndo emptyForm $ leftmost [updateEvt, (Endo $ const emptyForm) <$ saveEvt]
       (dynFormValidated, updateEvt) <- el "form" $ runEventWriterT $ do
 
-        dynCurrentPassword <- formGroup 
-           "Current Password" 
-           myCurrentPw 
-           validateNonEmpty 
-           "password" 
-           dynFormRaw 
-           saveEvt
+        dynCurrentPassword <- formGroup saveEvt dynFormRaw FormGroupConfig {
+             label = "Current Password" 
+           , lens = myCurrentPw 
+           , validator = validateNonEmpty 
+           , fieldType = "password" 
+           }
 
-        dynNewPassword <- formGroup "New Password" myNewPw validatePassword "password" dynFormRaw saveEvt
-        dynNewPasswordRepeat <- formGroup "New Password (repeat)" myNewPwRepeat validatePasswordRepeat "password" dynFormRaw saveEvt
+        dynNewPassword <- formGroup saveEvt dynFormRaw FormGroupConfig {
+             label = "New Password" 
+           , lens = myNewPw 
+           , validator = validatePassword 
+           , fieldType = "password" 
+           }
+
+        dynNewPasswordRepeat <- formGroup saveEvt dynFormRaw FormGroupConfig {
+             label = "New Password (repeat)" 
+           , lens = myNewPwRepeat 
+           , validator = validatePasswordRepeat 
+           , fieldType = "password" 
+           }
+
         return $ (liftA3 . liftA3) Form <$> dynCurrentPassword <*> dynNewPassword <*> dynNewPasswordRepeat
       saveEvt <- el "div" $ boolButton ("class" =: "btn btn-info") (isValid <$> dynFormValidated) $ text "Save"
   return ()
