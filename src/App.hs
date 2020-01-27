@@ -3,7 +3,7 @@
 
 module App where
 
-import           Ipanema.Form
+import           Ipanema.Widget
 import           GHCJS.DOM.Types
 import           Reflex.Dom.Core
 import           Reflex.Dom.Main (mainWidgetWithHead)
