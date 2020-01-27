@@ -1,0 +1,4 @@
+*.swp
+default.nix
+dist-*
+reflex-examples.cabal

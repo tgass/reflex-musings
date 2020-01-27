@@ -1,0 +1,69 @@
+name:                reflex-musings
+version:             0.1.0.0
+synopsis:            Beachvolleyball Tournament Manager
+description:         Beachvolleyball Tournament Manager
+category:            Web
+build-type:          Simple
+cabal-version:       >=1.10
+
+flag warp 
+  description: Build ipanema-web-warp
+  default: False
+
+flag webkit 
+  description: Build to run in a webkit environment (ios, standalone app on macos)
+  default: False
+
+flag prod
+  description: Production settings
+  default: False
+
+library
+  hs-source-dirs: src
+
+  ghc-options: -Wall -Wno-orphans -Wno-name-shadowing -Wno-simplifiable-class-constraints 
+  if flag(warp) || flag(webkit)
+    cpp-options: -DREMOTE_CLIENT
+
+  if flag(prod)
+    cpp-options: -DPROD
+
+  build-depends:       
+    base,
+    containers,
+    either,
+    ghcjs-dom,
+    jsaddle,
+    lens,
+    reflex,
+    reflex-dom,
+    text
+
+  default-extensions: 
+    OverloadedStrings
+    RecursiveDo
+    LambdaCase
+    ScopedTypeVariables 
+    MultiParamTypeClasses 
+
+  exposed-modules: 
+    App
+
+  other-modules:
+    Ipanema.Form
+
+executable reflex-musings
+  if flag(warp)
+    buildable: False
+  hs-source-dirs: src-bin
+  main-is: main.hs
+  build-depends:
+    base,
+    ghcjs-dom,
+    reflex-dom,
+    reflex-musings
+  ghc-prof-options: -fprof-auto
+  if flag(webkit)
+    ghc-options: -dynamic
+  ghc-options: -threaded -Wall -Wno-simplifiable-class-constraints -Wno-name-shadowing -Wno-unused-top-binds -O2
+
