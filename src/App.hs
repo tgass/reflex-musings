@@ -26,5 +26,5 @@ headElement = do
            "crossorigin" =: "anonymous"
   where
     meta attrs = elAttr "meta" attrs blank
-    script attrs = elAttr "meta" attrs blank
-    link attrs = elAttr "meta" attrs blank
+    script attrs = elAttr "script" attrs blank
+    link attrs = elAttr "link" attrs blank

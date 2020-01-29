@@ -38,24 +38,24 @@ data Reason = PasswordMismatch | CurrentPasswordEmpty | PasswordTooShort | Passw
 
 changePasswordWidget :: MonadWidget t m => m ()
 changePasswordWidget = do
-  rec dynFormRaw <- foldDyn appEndo emptyForm $ leftmost [updateEvt, (Endo $ const emptyForm) <$ saveEvt]
+  rec dynFormRaw <- foldDyn appEndo emptyForm updateEvt
       (dynFormValidated, updateEvt) <- el "form" $ runEventWriterT $ do
 
-        dynCurrentPassword <- formGroup saveEvt dynFormRaw FormGroupConfig {
+        dynCurrentPassword <- formGroup saveEvt dynFormRaw Config {
              label = "Current Password" 
            , lens = myCurrentPw 
            , validator = validateNonEmpty 
            , fieldType = "password" 
            }
 
-        dynNewPassword <- formGroup saveEvt dynFormRaw FormGroupConfig {
+        dynNewPassword <- formGroup saveEvt dynFormRaw Config {
              label = "New Password" 
            , lens = myNewPw 
            , validator = validatePassword 
            , fieldType = "password" 
            }
 
-        dynNewPasswordRepeat <- formGroup saveEvt dynFormRaw FormGroupConfig {
+        dynNewPasswordRepeat <- formGroup saveEvt dynFormRaw Config {
              label = "New Password (repeat)" 
            , lens = myNewPwRepeat 
            , validator = validatePasswordRepeat 
@@ -79,7 +79,7 @@ validateNonEmpty (Form (Just myCurrentPw) _ _)
 validatePasswordRepeat :: FormRaw -> Maybe (Validation [Reason] Password)
 validatePasswordRepeat (Form _ _ Nothing) = Nothing
 validatePasswordRepeat form@Form{..} = case validatePassword form of
-  Just (Success (Password password)) -> if (Just password) == _myNewPwRepeat
+  Just (Success (Password password)) -> if Just password == _myNewPwRepeat
                    then Just $ Success $ Password password 
                    else Just $ Failure [PasswordMismatch]
   _ -> Nothing

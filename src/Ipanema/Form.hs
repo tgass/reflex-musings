@@ -15,15 +15,15 @@ import qualified Data.Map.Strict as Map
 import           Reflex
 import           Reflex.Dom hiding (mainWidgetWithHead)
 
-data FormGroupConfig form reason a = FormGroupConfig {
+data Config form reason a = Config {
     label :: Text
   , lens :: Lens' form (Maybe Text)
   , validator :: form -> Maybe (Validation [reason] a)
   , fieldType :: Text
   }
 
-formGroup :: (Show reason, MonadWidget t m, EventWriter t (Endo form) m) => Event t () -> Dynamic t form -> FormGroupConfig form reason a -> m (Dynamic t (Maybe (Validation [reason] a)))
-formGroup resetEvt dynFormRaw FormGroupConfig{..} = do
+formGroup :: (Show reason, MonadWidget t m, EventWriter t (Endo form) m) => Event t () -> Dynamic t form -> Config form reason a -> m (Dynamic t (Maybe (Validation [reason] a)))
+formGroup resetEvt dynFormRaw Config{..} = do
   let dynValidated = validator <$> dynFormRaw
   elDynAttr "div" (mergeWithClass "form-group has-feedback" . mkClass <$> dynValidated) $ do
     elAttr "label" ("class" =: "control-label") $ text label

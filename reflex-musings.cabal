@@ -50,6 +50,7 @@ library
     App
 
   other-modules:
+    Ipanema.Widget
     Ipanema.Form
 
 executable reflex-musings
