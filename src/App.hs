@@ -3,7 +3,7 @@
 
 module App where
 
-import           Ipanema.Widget
+import           Musings.ChangePasswordWidget
 import           GHCJS.DOM.Types
 import           Reflex.Dom.Core
 import           Reflex.Dom.Main (mainWidgetWithHead)

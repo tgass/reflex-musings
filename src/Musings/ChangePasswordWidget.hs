@@ -4,9 +4,10 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE RankNTypes #-}
 
-module Ipanema.Widget where
+module Musings.ChangePasswordWidget where
 
 import           Control.Applicative
+import           Control.Monad
 import           Control.Lens
 import           Data.Char
 import           Data.Either.Validation
@@ -16,25 +17,25 @@ import           Data.Text (Text)
 import qualified Data.Text as T
 import           Reflex
 import           Reflex.Dom hiding (mainWidgetWithHead)
-import           Ipanema.Form
+import           Musings.FormGroup
+
+newtype Password = Password Text deriving (Show, Eq)
 
 data Form a b = Form {
-    _myCurrentPw :: a
-  , _myNewPw :: b
-  , _myNewPwRepeat :: b
-  }
+    _fCurrentPassword :: a
+  , _fNewPassword :: b
+  , _fNewPasswordRepeat :: b
+  } deriving Show
 
 makeLenses ''Form
 
 type FormValidated = Form Text Password
 type FormRaw = Form (Maybe Text) (Maybe Text)
 
-newtype Password = Password Text deriving (Show, Eq)
-
 emptyForm :: FormRaw
 emptyForm = Form Nothing Nothing Nothing
 
-data Reason = PasswordMismatch | CurrentPasswordEmpty | PasswordTooShort | PasswordTooLong | PasswordRequiresCapitalLetter deriving Show
+data Reason = PasswordMismatch | FieldRequired | PasswordTooShort | PasswordTooLong | PasswordRequiresCapitalLetter deriving Show
 
 changePasswordWidget :: MonadWidget t m => m ()
 changePasswordWidget = do
@@ -43,52 +44,45 @@ changePasswordWidget = do
 
         dynCurrentPassword <- formGroup saveEvt dynFormRaw Config {
              label = "Current Password" 
-           , lens = myCurrentPw 
-           , validator = validateNonEmpty 
+           , lens = fCurrentPassword 
+           , validator = fmap validateNonEmpty . view fCurrentPassword
            , fieldType = "password" 
            }
 
         dynNewPassword <- formGroup saveEvt dynFormRaw Config {
              label = "New Password" 
-           , lens = myNewPw 
-           , validator = validatePassword 
+           , lens = fNewPassword 
+           , validator = fmap validatePassword . view fNewPassword
            , fieldType = "password" 
            }
 
         dynNewPasswordRepeat <- formGroup saveEvt dynFormRaw Config {
              label = "New Password (repeat)" 
-           , lens = myNewPwRepeat 
-           , validator = validatePasswordRepeat 
+           , lens = fNewPasswordRepeat 
+           , validator = \form -> join $ validatePasswordRepeat <$> (form ^. fNewPassword) <*> (form ^. fNewPasswordRepeat)
            , fieldType = "password" 
            }
 
         return $ (liftA3 . liftA3) Form <$> dynCurrentPassword <*> dynNewPassword <*> dynNewPasswordRepeat
       saveEvt <- el "div" $ boolButton ("class" =: "btn btn-info") (isValid <$> dynFormValidated) $ text "Save"
   return ()
-  where
-    isValid :: Maybe (Validation [Reason] FormValidated) -> Bool
-    isValid (Just (Success _)) = True
-    isValid _ = False
 
-validateNonEmpty :: FormRaw -> Maybe (Validation [Reason] Text)
-validateNonEmpty (Form Nothing _ _) = Nothing
-validateNonEmpty (Form (Just myCurrentPw) _ _)
-  | not $ T.null myCurrentPw = Just $ Success myCurrentPw
-  | otherwise = Just $ Failure [CurrentPasswordEmpty]
+validateNonEmpty :: Text -> Validation [Reason] Text
+validateNonEmpty text 
+  | not $ T.null text = Success text
+  | otherwise = Failure [FieldRequired]
 
-validatePasswordRepeat :: FormRaw -> Maybe (Validation [Reason] Password)
-validatePasswordRepeat (Form _ _ Nothing) = Nothing
-validatePasswordRepeat form@Form{..} = case validatePassword form of
-  Just (Success (Password password)) -> if Just password == _myNewPwRepeat
-                   then Just $ Success $ Password password 
-                   else Just $ Failure [PasswordMismatch]
+validatePasswordRepeat :: Text -> Text -> Maybe (Validation [Reason] Password)
+validatePasswordRepeat passwordNew passwordRepeat = case validatePassword passwordNew of
+  (Success (Password password)) 
+    | password == passwordRepeat -> Just $ Success $ Password password 
+    | otherwise -> Just $ Failure [PasswordMismatch]
   _ -> Nothing
 
-validatePassword :: FormRaw -> Maybe (Validation [Reason] Password)
-validatePassword (Form _ (Just pw) _) = Just $
-  valPasswordSize pw <*
-  valPasswordRequiresCapitalLetter pw 
-validatePassword _ = Nothing
+validatePassword :: Text -> Validation [Reason] Password
+validatePassword password = 
+  valPasswordSize password <*
+  valPasswordRequiresCapitalLetter password 
 
 valPasswordSize :: Text -> Validation [Reason] Password
 valPasswordSize text
@@ -108,3 +102,8 @@ boolButton attrs dynIsEnabled child = do
   where
     mkAttr True = attrs
     mkAttr False = attrs <> "disabled" =: "disabled"
+
+isValid :: Maybe (Validation [Reason] FormValidated) -> Bool
+isValid (Just (Success _)) = True
+isValid _ = False
+

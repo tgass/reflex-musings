@@ -37,7 +37,8 @@ library
     lens,
     reflex,
     reflex-dom,
-    text
+    text,
+    tuple
 
   default-extensions: 
     OverloadedStrings
@@ -50,8 +51,8 @@ library
     App
 
   other-modules:
-    Ipanema.Widget
-    Ipanema.Form
+    Musings.ChangePasswordWidget
+    Musings.FormGroup
 
 executable reflex-musings
   if flag(warp)
