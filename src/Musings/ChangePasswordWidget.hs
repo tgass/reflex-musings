@@ -8,6 +8,7 @@ module Musings.ChangePasswordWidget where
 
 import           Control.Applicative
 import           Control.Monad
+import           Control.Monad.Reader
 import           Control.Lens
 import           Data.Char
 import           Data.Either.Validation
@@ -37,26 +38,26 @@ emptyForm = Form Nothing Nothing Nothing
 
 data Reason = PasswordMismatch | FieldRequired | PasswordTooShort | PasswordTooLong | PasswordRequiresCapitalLetter deriving Show
 
-changePasswordWidget :: MonadWidget t m => m ()
+changePasswordWidget :: forall t m. MonadWidget t m => m ()
 changePasswordWidget = do
   rec dynFormRaw <- foldDyn appEndo emptyForm updateEvt
-      (dynFormValidated, updateEvt) <- el "form" $ runEventWriterT $ do
+      (dynFormValidated, updateEvt) <- el "form" $ flip runReaderT (saveEvt, dynFormRaw) $ runEventWriterT $ do
 
-        dynCurrentPassword <- formGroup saveEvt dynFormRaw Config {
+        dynCurrentPassword <- formGroup Config {
              label = "Current Password" 
            , lens = fCurrentPassword 
            , validator = fmap validateNonEmpty . view fCurrentPassword
            , fieldType = "password" 
            }
 
-        dynNewPassword <- formGroup saveEvt dynFormRaw Config {
+        dynNewPassword <- formGroup Config {
              label = "New Password" 
            , lens = fNewPassword 
            , validator = fmap validatePassword . view fNewPassword
            , fieldType = "password" 
            }
 
-        dynNewPasswordRepeat <- formGroup saveEvt dynFormRaw Config {
+        dynNewPasswordRepeat <- formGroup Config {
              label = "New Password (repeat)" 
            , lens = fNewPasswordRepeat 
            , validator = \form -> join $ validatePasswordRepeat <$> (form ^. fNewPassword) <*> (form ^. fNewPasswordRepeat)
