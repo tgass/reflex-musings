@@ -19,7 +19,7 @@ import           Reflex.Dom hiding (mainWidgetWithHead)
 
 data Config form reason a = Config {
     label :: Text
-  , lens :: Lens' form (Maybe Text)
+  , selector :: Lens' form (Maybe Text)
   , validator :: form -> Maybe (Validation [reason] a)
   , fieldType :: Text
   }
@@ -33,7 +33,7 @@ formGroup Config{..} = do
             & textInputConfig_attributes .~ pure ("class" =: "form-control" <> "placeholder" =: label)
             & textInputConfig_setValue .~ ("" <$ resetEvt)
             & textInputConfig_inputType .~ fieldType
-    tellEvent $ fmap (\val -> Endo $ lens ?~ val) $ tag (current $ ti ^. textInput_value) $ ffilter not $ updated $ ti ^. textInput_hasFocus
+    tellEvent $ fmap (\val -> Endo $ selector ?~ val) $ tag (current $ ti ^. textInput_value) $ ffilter not $ updated $ ti ^. textInput_hasFocus
     elAttr "span" ("class" =: "form-control-feedback") $ elDynAttr "span" (mkFeedbackAttrs <$> dynValidated) blank
     void $ dyn $ reasonWidget <$> dynValidated
   return dynValidated

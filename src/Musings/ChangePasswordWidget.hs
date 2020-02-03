@@ -45,21 +45,21 @@ changePasswordWidget = do
 
         dynCurrentPassword <- formGroup Config {
              label = "Current Password" 
-           , lens = fCurrentPassword 
+           , selector = fCurrentPassword 
            , validator = fmap validateNonEmpty . view fCurrentPassword
            , fieldType = "password" 
            }
 
         dynNewPassword <- formGroup Config {
              label = "New Password" 
-           , lens = fNewPassword 
+           , selector = fNewPassword 
            , validator = fmap validatePassword . view fNewPassword
            , fieldType = "password" 
            }
 
         dynNewPasswordRepeat <- formGroup Config {
              label = "New Password (repeat)" 
-           , lens = fNewPasswordRepeat 
+           , selector = fNewPasswordRepeat 
            , validator = \form -> join $ validatePasswordRepeat <$> (form ^. fNewPassword) <*> (form ^. fNewPasswordRepeat)
            , fieldType = "password" 
            }
