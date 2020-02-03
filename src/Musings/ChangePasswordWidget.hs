@@ -38,7 +38,7 @@ emptyForm = Form Nothing Nothing Nothing
 
 data Reason = PasswordMismatch | FieldRequired | PasswordTooShort | PasswordTooLong | PasswordRequiresCapitalLetter deriving Show
 
-changePasswordWidget :: forall t m. MonadWidget t m => m ()
+changePasswordWidget :: MonadWidget t m => m ()
 changePasswordWidget = do
   rec dynFormRaw <- foldDyn appEndo emptyForm updateEvt
       (dynFormValidated, updateEvt) <- el "form" $ flip runReaderT (saveEvt, dynFormRaw) $ runEventWriterT $ do

@@ -4,6 +4,7 @@
 
 module Musings.FormGroup where
 
+import           Control.Arrow
 import           Control.Lens
 import           Control.Monad
 import           Control.Monad.Reader
@@ -23,10 +24,9 @@ data Config form reason a = Config {
   , fieldType :: Text
   }
 
-formGroup :: forall t m reason form a. (Show reason, MonadWidget t m, EventWriter t (Endo form) m, MonadReader (Event t (), Dynamic t form) m) => Config form reason a -> m (Dynamic t (Maybe (Validation [reason] a)))
+formGroup :: (Show reason, MonadWidget t m, EventWriter t (Endo form) m, MonadReader (Event t (), Dynamic t form) m) => Config form reason a -> m (Dynamic t (Maybe (Validation [reason] a)))
 formGroup Config{..} = do
-  (resetEvt, dynFormRaw) <- ask 
-  let dynValidated = validator <$> dynFormRaw
+  (resetEvt, dynValidated) <- asks (second (fmap validator))
   elDynAttr "div" (mergeWithClass "form-group has-feedback" . mkStateAttrs <$> dynValidated) $ do
     elAttr "label" ("class" =: "control-label") $ text label
     ti <- textInput $ def
