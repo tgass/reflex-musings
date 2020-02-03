@@ -82,17 +82,17 @@ validatePasswordRepeat passwordNew passwordRepeat = case validatePassword passwo
 
 validatePassword :: Text -> Validation [Reason] Password
 validatePassword password = 
-  valPasswordSize password <*
-  valPasswordRequiresCapitalLetter password 
+  valLengthRange 6 20 password <*
+  valRequiresCapitalLetter password 
 
-valPasswordSize :: Text -> Validation [Reason] Password
-valPasswordSize text
-  | T.length text < 6 = Failure [PasswordTooShort]
-  | T.length text > 20 = Failure [PasswordTooLong]
+valLengthRange :: Int -> Int -> Text -> Validation [Reason] Password
+valLengthRange min max text
+  | T.length text < min = Failure [PasswordTooShort]
+  | T.length text > max = Failure [PasswordTooLong]
   | otherwise = Success $ Password text
 
-valPasswordRequiresCapitalLetter :: Text -> Validation [Reason] Password
-valPasswordRequiresCapitalLetter text
+valRequiresCapitalLetter :: Text -> Validation [Reason] Password
+valRequiresCapitalLetter text
   | T.any isUpper text = Success $ Password text
   | otherwise = Failure [PasswordRequiresCapitalLetter]
 
